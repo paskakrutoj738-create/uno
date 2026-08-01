@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a1929">
+<title>Уно Ultimate</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--red:#ff4757;--yellow:#ffa502;--green:#2ed573;--blue:#1e90ff;--gold:#ffd700;--purple:#a855f7}
+html{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(ellipse at top,#1a3a5c 0%,#0a1929 50%,#000 100%);
+  color:#fff;min-height:100%;overflow-x:hidden;overflow-y:auto;
+  user-select:none;position:relative;
+}
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+#confettiCanvas{position:fixed;inset:0;z-index:1000;pointer-events:none}
+#particles{position:fixed;inset:0;z-index:50;pointer-events:none}
+.particle{
+  position:absolute;width:8px;height:8px;border-radius:50%;
+  pointer-events:none;animation:particleFly .8s ease-out forwards;
+}
+@keyframes particleFly{
+  0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}
+}
+
+#setup{
+  position:relative;z-index:10;
+  max-width:520px;margin:20px auto;padding:20px;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-radius:24px;border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:slideUp .5s cubic-bezier(.16,1,.3,1);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+h1{
+  text-align:center;font-size:2.2em;margin-bottom:16px;font-weight:900;
+  background:linear-gradient(90deg,#ff4757,#ffa502,#2ed573,#1e90ff,#ff4757);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:shine 3s linear infinite;letter-spacing:3px;
+}
+@keyframes shine{to{background-position:200% center}}
+.row{display:flex;gap:10px;align-items:center;margin:10px 0}
+.row label{flex:1;font-size:14px;opacity:.9}
+select,input,button{
+  padding:10px 14px;border-radius:12px;border:none;
+  background:rgba(255,255,255,.1);color:#fff;font-size:14px;
+  transition:all .2s;cursor:pointer;
+}
+select:focus,input:focus{outline:2px solid var(--gold)}
+button{
+  font-weight:600;
+  background:linear-gradient(135deg,#1e90ff,#00b4d8);
+  box-shadow:0 4px 15px rgba(30,144,255,.4);
+}
+button:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(30,144,255,.6)}
+button:active{transform:translateY(0)}
+
+.player-conf{
+  display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;
+  align-items:center;
+  padding:10px;
+  background:rgba(255,255,255,.05);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.1);
+}
+.player-conf input{flex:1 1 120px;min-width:0;padding:9px 10px;font-size:13px}
+.player-conf select{flex:1 1 100px;min-width:0;padding:9px 10px;font-size:13px}
+.player-conf .toggle-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  flex:0 0 auto;
+}
+
+.toggle-switch{
+  position:relative;width:46px;height:26px;
+  background:rgba(255,255,255,.1);border-radius:13px;
+  cursor:pointer;transition:background .3s;
+  border:2px solid rgba(255,255,255,.2);
+}
+.toggle-switch.active{
+  background:linear-gradient(135deg,var(--purple),#ec4899);
+  border-color:var(--purple);
+}
+.toggle-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;transition:transform .3s;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+}
+.toggle-switch.active::after{transform:translateX(20px)}
+.toggle-label{font-size:10px;text-align:center;opacity:.6;}
+
+#game{
+  display:none;position:relative;z-index:5;
+  min-height:100vh;padding:10px 10px 20px;
+  flex-direction:column;
+}
+#game.show{display:flex}
+
+.top-bar{display:flex;justify-content:space-around;gap:6px;padding:6px 0;flex-wrap:wrap}
+.opp{
+  text-align:center;padding:7px 10px;border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:2px solid rgba(255,255,255,.1);
+  min-width:90px;flex:1;
+  transition:all .3s;position:relative;
+}
+.opp.active{
+  background:rgba(255,215,0,.12);border-color:var(--gold);
+  box-shadow:0 0 20px rgba(255,215,0,.3);transform:scale(1.04);
+}
+.opp.active::before{
+  content:'▼';position:absolute;top:-14px;left:50%;
+  transform:translateX(-50%);color:var(--gold);font-size:12px;
+  animation:bounce 1s infinite;
+}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.opp .name{font-weight:700;font-size:12px;margin-bottom:2px}
+.opp .count{font-size:10px;opacity:.7}
+.card-back-mini{
+  display:inline-block;width:6px;height:9px;
+  background:linear-gradient(135deg,#fff,#aaa);
+  border-radius:2px;margin:1px;
+}
+
+.center-area{
+  flex:1;display:flex;justify-content:center;align-items:center;
+  gap:25px;padding:8px;position:relative;min-height:160px;
+}
+.color-indicator{
+  position:absolute;top:5px;left:50%;transform:translateX(-50%);
+  padding:5px 16px;border-radius:20px;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(10px);
+  border:2px solid var(--current-color,#fff);
+  font-size:12px;font-weight:700;
+  transition:all .4s;z-index:5;white-space:nowrap;
+}
+
+.pile{text-align:center;position:relative;transition:transform .2s}
+.pile-label{font-size:10px;opacity:.5;margin-top:5px;text-transform:uppercase;letter-spacing:1px}
+.pile-count{
+  position:absolute;bottom:-4px;right:-6px;
+  background:var(--gold);color:#000;
+  border-radius:50%;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+#drawPile{cursor:pointer}
+#drawPile:hover .card{transform:scale(1.05) rotate(-2deg)}
+#discardPile.drop-hover .card{transform:scale(1.1);box-shadow:0 0 40px var(--gold)!important}
+
+.card{
+  width:80px;height:118px;border-radius:12px;
+  color:#fff;font-weight:900;
+  display:inline-flex;flex-direction:column;justify-content:space-between;
+  padding:6px;cursor:pointer;position:relative;
+  box-shadow:0 4px 10px rgba(0,0,0,.5),inset 0 0 0 3px rgba(255,255,255,.25);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s;
+  border:3px solid #fff;touch-action:none;
+}
+.card .tl,.card .br{font-size:15px;line-height:1}
+.card .br{align-self:flex-end;transform:rotate(180deg)}
+.card .mid{
+  font-size:34px;text-align:center;align-self:center;
+  margin:auto 0;text-shadow:2px 2px 4px rgba(0,0,0,.3);
+  opacity: 1 !important;
+}
+.card.red{background:linear-gradient(135deg,#ff6b7a,#c0392b)}
+.card.yellow{background:linear-gradient(135deg,#ffc048,#f39c12);color:#333}
+.card.green{background:linear-gradient(135deg,#4ade80,#16a34a)}
+.card.blue{background:linear-gradient(135deg,#60a5fa,#1d4ed8)}
+.card.wild{background:conic-gradient(from 45deg,#ff4757 0 25%,#ffa502 25% 50%,#2ed573 50% 75%,#1e90ff 75%)}
+
+.card.playable{
+  transform:translateY(-18px);
+  border-color:rgba(255,255,255,.9);
+  box-shadow:0 8px 20px rgba(0,0,0,.6),0 0 15px rgba(255,215,0,.3);
+}
+
+.card.hint{animation:hintPulse .5s ease-in-out 6 alternate;z-index:20}
+@keyframes hintPulse{
+  from{transform:translateY(-18px) scale(1);box-shadow:0 0 20px #ff00ff}
+  to{transform:translateY(-28px) scale(1.08);box-shadow:0 0 35px #ff00ff,0 0 50px #ff00ff}
+}
+.card.drag-ghost{opacity:.3}
+
+.drag-clone{
+  position:fixed;z-index:9999;pointer-events:none;
+  transition:none;
+  filter:drop-shadow(0 15px 25px rgba(0,0,0,.6));
+}
+
+.actions{
+  display:flex;gap:8px;justify-content:center;
+  padding:6px 0;flex-wrap:wrap;position:relative;z-index:6;
+}
+.uno-btn{
+  background:linear-gradient(135deg,#ff4757,#ff6348);
+  font-size:15px;padding:9px 20px;border-radius:30px;
+  font-weight:900;letter-spacing:2px;
+  box-shadow:0 4px 15px rgba(255,71,87,.5);
+  animation:unoPulse 1.5s infinite;
+  transition:all .3s;
+}
+@keyframes unoPulse{
+  0%,100%{transform:scale(1);box-shadow:0 4px 15px rgba(255,71,87,.5)}
+  50%{transform:scale(1.04);box-shadow:0 6px 25px rgba(255,71,87,.7)}
+}
+@keyframes unoPulseWarning{
+  0%,100%{transform:scale(1);box-shadow:0 0 20px #ff0000,0 0 40px #ff0000}
+  50%{transform:scale(1.15);box-shadow:0 0 40px #ff0000,0 0 80px #ff0000}
+}
+.draw-btn{
+  background:linear-gradient(135deg,#576574,#222f3e);
+  padding:9px 16px;border-radius:30px;font-size:14px;
+}
+
+#log{
+  max-width:500px;margin:5px auto;padding:5px 10px;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(8px);
+  border-radius:10px;max-height:65px;overflow-y:auto;
+  font-size:11px;border:1px solid rgba(255,255,255,.08);
+  position:relative;z-index:6;
+}
+#log div{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);animation:logSlide .2s}
+@keyframes logSlide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+
+#hand{
+  display:flex;justify-content:center;align-items:flex-end;
+  flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;
+  padding:10px 8px 14px;gap:0;
+  background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.15));
+  border-top:1px solid rgba(255,255,255,.08);
+  min-height:145px;position:relative;z-index:6;
+}
+#hand .card{margin:0 -16px;flex-shrink:0;transform-origin:bottom center}
+#hand .card:hover:not(.drag-ghost){transform:translateY(-28px) scale(1.06);z-index:10}
+
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);
+  display:none;justify-content:center;align-items:center;z-index:100;
+}
+.modal.show{display:flex;animation:modalFade .25s}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+.modal-box{
+  background:linear-gradient(135deg,rgba(30,30,60,.95),rgba(20,20,40,.95));
+  padding:24px;border-radius:22px;
+  text-align:center;min-width:280px;max-width:92vw;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 20px 60px rgba(0,0,0,.8);
+  animation:modalPop .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalPop{from{opacity:0;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+.modal-box h2{
+  font-size:1.5em;margin-bottom:14px;
+  background:linear-gradient(90deg,#ffd700,#ff6b6b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.color-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.color-btn{
+  width:70px;height:70px;border-radius:50%;
+  border:4px solid #fff;cursor:pointer;margin:0 auto;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.color-btn:hover{transform:scale(1.15) rotate(8deg)}
+.color-btn.red{background:radial-gradient(circle,#ff6b7a,#c0392b)}
+.color-btn.yellow{background:radial-gradient(circle,#ffc048,#f39c12)}
+.color-btn.green{background:radial-gradient(circle,#4ade80,#16a34a)}
+.color-btn.blue{background:radial-gradient(circle,#60a5fa,#1d4ed8)}
+
+#passOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  z-index:9999 !important;
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:20px;
+}
+#passOverlay.show{display:flex !important;animation:fadeIn .4s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#passOverlay h2{
+  font-size:2em;margin-bottom:14px;color:var(--gold);
+  text-shadow:0 0 25px var(--gold);animation:titlePulse 2s infinite;
+}
+@keyframes titlePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+#passOverlay p{font-size:1em;margin-bottom:30px;opacity:.75}
+#readyBtn{
+  padding:14px 40px;font-size:1.1em;border-radius:30px;
+  background:linear-gradient(135deg,#2ed573,#16a34a);
+  border:none;color:#fff;font-weight:900;
+  box-shadow:0 6px 20px rgba(46,213,115,.5);
+  transition:all .2s;
+}
+#readyBtn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(46,213,115,.6)}
+
+#fullscreenBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 20px;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: all 0.3s;
+}
+#fullscreenBtn:hover {
+  background: rgba(255,255,255,0.4);
+  transform: scale(1.1);
+}
+
+#cheatToggle{
+  position:fixed;bottom:10px;right:10px;z-index:50;
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  border:2px solid #fff;font-size:19px;
+  display:none;justify-content:center;align-items:center;
+  box-shadow:0 4px 15px rgba(168,85,247,.5);cursor:pointer;transition:all .3s;
+}
+#cheatToggle:hover{transform:rotate(180deg) scale(1.1)}
+#cheatToggle.show{display:flex}
+#cheatPanel{
+  position:fixed;bottom:64px;right:10px;z-index:49;
+  background:rgba(20,20,40,.95);backdrop-filter:blur(16px);
+  border:1px solid var(--purple);border-radius:14px;
+  padding:10px;width:260px;display:none;flex-direction:column;gap:5px;
+  box-shadow:0 8px 30px rgba(0,0,0,.7);max-height:75vh;overflow-y:auto;
+}
+#cheatPanel.show{display:flex;animation:slideIn .25s}
+@keyframes slideIn{from{opacity:0;transform:translateX(15px)}to{opacity:1;transform:translateX(0)}}
+#cheatPanel h3{color:#ff00ff;font-size:13px;text-align:center;margin-bottom:3px;text-shadow:0 0 8px #ff00ff}
+.cheat-btn{
+  padding:7px 9px;border-radius:8px;
+  background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.35);
+  color:#fff;font-size:12px;text-align:left;
+  display:flex;align-items:center;gap:7px;transition:all .15s;cursor:pointer;
+}
+.cheat-btn:hover{background:rgba(168,85,247,.4);transform:translateX(-2px)}
+.cheat-btn .emoji{font-size:16px}
+.cheat-btn .label{flex:1}
+.cheat-btn .desc{font-size:9px;opacity:.6;display:block}
+
+.cheat-divider{
+  height:1px;background:linear-gradient(90deg,transparent,rgba(255,0,255,.4),transparent);
+  margin:4px 0;
+}
+.cheat-section-title{
+  color:#ff00ff;font-size:10px;text-align:center;
+  text-transform:uppercase;letter-spacing:2px;opacity:.7;
+  margin:2px 0;
+}
+
+.silent-mode-toggle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 10px;
+  background:rgba(168,85,247,.1);
+  border:1px solid rgba(168,85,247,.3);
+  border-radius:8px;
+  margin:5px 0;
+}
+.silent-mode-toggle .label{
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.silent-mode-toggle .emoji{font-size:16px}
+
+.player-pick{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.player-pick button{padding:9px;font-size:13px}
+.spy-grid{display:grid;gap:10px;margin-top:10px;max-height:55vh;overflow-y:auto}
+.spy-player{background:rgba(255,255,255,.05);padding:7px;border-radius:10px}
+.spy-player h4{margin-bottom:5px;color:var(--gold);font-size:13px}
+.spy-cards{display:flex;flex-wrap:wrap;gap:3px}
+.spy-cards .card{width:42px;height:62px;padding:3px;cursor:default}
+.spy-cards .card .tl,.spy-cards .card .br{font-size:9px}
+.spy-cards .card .mid{font-size:17px}
+.deck-preview{display:flex;gap:5px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.win-text{
+  font-size:2.2em;font-weight:900;
+  background:linear-gradient(90deg,#ffd700,#ff6b6b,#ffd700);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:shine 2s linear infinite;margin-bottom:14px;
+}
+
+.give-cards-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:7px;
+  margin-top:12px;max-height:50vh;overflow-y:auto;padding:4px;
+}
+.give-card-btn{
+  width:46px;height:66px;border-radius:8px;
+  border:2px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:#fff;
+}
+.give-card-btn:hover{transform:scale(1.1);border-color:#fff}
+.give-card-btn.red{background:linear-gradient(135deg,#ff6b7a,#c0392b)}
+.give-card-btn.yellow{background:linear-gradient(135deg,#ffc048,#f39c12);color:#333}
+.give-card-btn.green{background:linear-gradient(135deg,#4ade80,#16a34a)}
+.give-card-btn.blue{background:linear-gradient(135deg,#60a5fa,#1d4ed8)}
+.give-card-btn.wild{background:conic-gradient(from 45deg,#ff4757 0 25%,#ffa502 25% 50%,#2ed573 50% 75%,#1e90ff 75%)}
+.player-select-give{
+  width:100%;padding:9px;border-radius:10px;
+  background:rgba(255,255,255,.1);color:#fff;font-size:13px;
+  margin-top:8px;
+}
+
+@keyframes tornadoShake{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  10%{transform:translate(-5px,-3px) rotate(-2deg)}
+  20%{transform:translate(5px,3px) rotate(2deg)}
+  30%{transform:translate(-3px,5px) rotate(-1deg)}
+  40%{transform:translate(3px,-5px) rotate(1deg)}
+  50%{transform:translate(-5px,3px) rotate(-2deg)}
+  60%{transform:translate(5px,-3px) rotate(2deg)}
+  70%{transform:translate(-3px,-5px) rotate(-1deg)}
+  80%{transform:translate(3px,5px) rotate(1deg)}
+  90%{transform:translate(-5px,-3px) rotate(-2deg)}
+}
+body.tornado-effect{animation:tornadoShake .8s ease-in-out}
+
+@keyframes rouletteFlash{
+  0%,100%{filter:hue-rotate(0deg)}
+  50%{filter:hue-rotate(180deg)}
+}
+body.roulette-effect{animation:rouletteFlash .6s ease-in-out}
+
+#unoWarning{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:80px;
+  font-weight:900;
+  color:#ff4757;
+  text-shadow:0 0 30px #ff0000,0 0 60px #ff0000,0 0 90px #ff0000;
+  z-index:999;
+  pointer-events:none;
+  display:none;
+  animation:unoWarningPulse .5s infinite;
+  letter-spacing:8px;
+}
+@keyframes unoWarningPulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+  50%{transform:translate(-50%,-50%) scale(1.2);opacity:.7}
+}
+
+@media(max-width:768px){
+  #setup{margin:10px 8px;padding:16px}
+  h1{font-size:1.8em;letter-spacing:2px;margin-bottom:12px}
+  .row{margin:8px 0}
+  .row label{font-size:13px}
+  select,input,button{padding:9px 12px;font-size:13px}
+  .player-conf{gap:6px;margin:6px 0;padding:8px}
+  .player-conf input{flex:1 1 100px;padding:8px 9px;font-size:12px}
+  .player-conf select{flex:1 1 90px;padding:8px 9px;font-size:12px}
+  .toggle-switch{width:42px;height:24px}
+  .toggle-switch::after{width:16px;height:16px}
+  .toggle-switch.active::after{transform:translateX(18px)}
+  .toggle-label{font-size:9px}
+  
+  .card{width:65px;height:96px;padding:5px}
+  .card .mid{font-size:28px}
+  .card .tl,.card .br{font-size:13px}
+  #hand{padding:8px 5px 12px;min-height:125px}
+  #hand .card{margin:0 -18px}
+  
+  .opp{min-width:70px;padding:5px 7px}
+  .opp .name{font-size:11px}
+  .opp .count{font-size:9px}
+  .center-area{gap:18px;min-height:140px;padding:4px}
+  .color-indicator{font-size:11px;padding:4px 12px}
+  .actions{gap:6px;padding:5px 0}
+  .uno-btn{font-size:14px;padding:8px 18px}
+  .draw-btn{padding:8px 14px;font-size:13px}
+  #log{max-width:92%;font-size:10px;max-height:55px;padding:4px 8px}
+  
+  .give-cards-grid{grid-template-columns:repeat(4,1fr);gap:5px}
+  .give-card-btn{width:42px;height:60px;font-size:15px}
+  
+  .modal-box{padding:20px;min-width:260px}
+  .modal-box h2{font-size:1.3em;margin-bottom:12px}
+  .color-btn{width:65px;height:65px}
+  .color-picker{gap:10px;margin-top:12px}
+  
+  #passOverlay h2{font-size:1.7em}
+  #passOverlay p{font-size:.9em;margin-bottom:25px}
+  #readyBtn{padding:12px 35px;font-size:1em}
+  
+  #cheatPanel{width:240px;padding:8px;bottom:60px}
+  #cheatPanel h3{font-size:12px}
+  .cheat-btn{padding:6px 8px;font-size:11px}
+  .cheat-btn .emoji{font-size:15px}
+  .cheat-btn .desc{font-size:8px}
+  
+  #unoWarning{font-size:60px;letter-spacing:5px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+<div id="particles"></div>
+
+<div id="unoWarning">УНО!</div>
+
+<div id="setup">
+  <h1> УНО</h1>
+  <div class="row">
+    <label>Игроков:</label>
+    <select id="playerCount">
+      <option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+    </select>
+  </div>
+  <div id="playerConfigs"></div>
+  <div class="row" style="justify-content:center;margin-top:16px; gap: 12px; flex-wrap: wrap;">
+    <button onclick="startGame()" style="padding:12px 20px;"> Начать игру</button>
+    <button onclick="showRules()" style="background:linear-gradient(135deg,#576574,#222f3e);padding:12px 20px;"> Правила</button>
+    <button onclick="openPreGameEditor()" style="background:linear-gradient(135deg,#a855f7,#ec4899);padding:12px 20px;">🎁 Раздать карты</button>
+  </div>
+</div>
+
+<div id="game">
+  <div id="fullscreenBtn" onclick="toggleFullscreen()"></div>
+
+  <div class="top-bar" id="opponents"></div>
+  <div class="center-area">
+    <div class="color-indicator" id="colorIndicator">● КРАСНЫЙ</div>
+    <div class="pile" id="drawPile" onclick="drawCard()">
+      <div class="card wild">
+        <div class="tl">★</div><div class="mid">🂠</div><div class="br">★</div>
+      </div>
+      <div class="pile-label">Колода</div>
+      <div class="pile-count" id="deckCount">0</div>
+    </div>
+    <div class="pile" id="discardPile">
+      <div id="discard"></div>
+      <div class="pile-label">Сброс</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="draw-btn" onclick="drawCard()"> Взять карту</button>
+    <button class="uno-btn" onclick="callUno()">УНО!</button>
+  </div>
+  <div id="log"></div>
+  <div id="hand"></div>
+</div>
+
+<button id="cheatToggle" onclick="toggleCheatPanel()"></button>
+<div id="cheatPanel">
+  <h3>🔮 ЧИТЫ</h3>
+  
+  <div class="silent-mode-toggle">
+    <div class="label">
+      <span class="emoji">🤫</span>
+      <span>Тихий режим</span>
+    </div>
+    <div class="toggle-switch active" id="silentModeToggle" onclick="toggleSilentMode()"></div>
+  </div>
+  
+  <div class="cheat-divider"></div>
+  
+  <div class="cheat-section-title">Информация</div>
+  <button class="cheat-btn" onclick="cheatSpy()"><span class="emoji">👁️</span><span class="label">Подсмотреть<span class="desc">Карты всех</span></span></button>
+  <button class="cheat-btn" onclick="cheatHint()"><span class="emoji"></span><span class="label">Подсказка<span class="desc">Лучший ход</span></span></button>
+  <button class="cheat-btn" onclick="cheatDeck()"><span class="emoji">🃏</span><span class="label">Колода<span class="desc">Верхние 5</span></span></button>
+  
+  <div class="cheat-divider"></div>
+  <div class="cheat-section-title">Управление</div>
+  <button class="cheat-btn" onclick="cheatColor()"><span class="emoji">🎨</span><span class="label">Сменить цвет<span class="desc">Любой цвет</span></span></button>
+  <button class="cheat-btn" onclick="cheatShuffleHand()"><span class="emoji">🔀</span><span class="label">Сортировка<span class="desc">По цвету</span></span></button>
+  <button class="cheat-btn" onclick="cheatSkipNext()"><span class="emoji">⏭️</span><span class="label">Пропуск<span class="desc">Следующий</span></span></button>
+  
+  <div class="cheat-divider"></div>
+  <div class="cheat-section-title">Карты</div>
+  <button class="cheat-btn" onclick="cheatGiveCards()"><span class="emoji">🎁</span><span class="label">Выдать карты<span class="desc">Стартовые карты</span></span></button>
+  <button class="cheat-btn" onclick="cheatRemoveCard()"><span class="emoji">🗑️</span><span class="label">Убрать карту<span class="desc">У соперника</span></span></button>
+  <button class="cheat-btn" onclick="cheatPunish()"><span class="emoji">📦</span><span class="label">Наказать<span class="desc">+3 карты</span></span></button>
+  
+  <div class="cheat-divider"></div>
+  <div class="cheat-section-title">✨ Новые</div>
+  <button class="cheat-btn" onclick="cheatSwapHands()"><span class="emoji">🔄</span><span class="label">Обмен руками<span class="desc">Поменяться с игроком</span></span></button>
+  <button class="cheat-btn" onclick="cheatSteal()"><span class="emoji">💰</span><span class="label">Ограбление<span class="desc">Забрать 3 карты</span></span></button>
+  <button class="cheat-btn" onclick="cheatTornado()"><span class="emoji">️</span><span class="label">Торнадо<span class="desc">Перемешать все руки</span></span></button>
+  <button class="cheat-btn" onclick="cheatKill()"><span class="emoji">💀</span><span class="label">Убить<span class="desc">Соперник проигрывает</span></span></button>
+  <button class="cheat-btn" onclick="cheatRoulette()"><span class="emoji">🎲</span><span class="label">Рулетка<span class="desc">Случайное событие</span></span></button>
+  
+  <div class="cheat-divider"></div>
+  <button class="cheat-btn" onclick="cheatWin()"><span class="emoji">🏆</span><span class="label">Победа<span class="desc">Мгновенно</span></span></button>
+</div>
+
+<div class="modal" id="colorModal">
+  <div class="modal-box">
+    <h2>Выберите цвет</h2>
+    <div class="color-picker">
+      <div class="color-btn red" onclick="pickColor('red')"></div>
+      <div class="color-btn yellow" onclick="pickColor('yellow')"></div>
+      <div class="color-btn green" onclick="pickColor('green')"></div>
+      <div class="color-btn blue" onclick="pickColor('blue')"></div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="winModal">
+  <div class="modal-box">
+    <div class="win-text" id="winText">🏆 Победа!</div>
+    <div id="finalResults"></div>
+    <button onclick="location.reload()" style="margin-top:12px;padding:11px 26px;font-size:1em;border-radius:30px"> Ещё раз</button>
+  </div>
+</div>
+<div class="modal" id="spyModal">
+  <div class="modal-box" style="min-width:400px">
+    <h2>👁️ Карты игроков</h2>
+    <div class="spy-grid" id="spyGrid"></div>
+    <button onclick="document.getElementById('spyModal').classList.remove('show')" style="margin-top:10px">Закрыть</button>
+  </div>
+</div>
+<div class="modal" id="deckModal">
+  <div class="modal-box">
+    <h2>📜 Верх колоды</h2>
+    <div class="deck-preview" id="deckPreview"></div>
+    <button onclick="document.getElementById('deckModal').classList.remove('show')" style="margin-top:10px">Закрыть</button>
+  </div>
+</div>
+<div class="modal" id="playerPickModal">
+  <div class="modal-box">
+    <h2 id="playerPickTitle">Выберите игрока</h2>
+    <div class="player-pick" id="playerPickList"></div>
+    <button onclick="document.getElementById('playerPickModal').classList.remove('show')" style="margin-top:10px">Отмена</button>
+  </div>
+</div>
+<div class="modal" id="giveCardsModal">
+  <div class="modal-box" style="min-width:360px">
+    <h2>🎁 Выдать карты</h2>
+    <select class="player-select-give" id="givePlayerSelect"></select>
+    <div class="give-cards-grid" id="giveCardsGrid"></div>
+    <button onclick="document.getElementById('giveCardsModal').classList.remove('show')" style="margin-top:12px">Закрыть</button>
+  </div>
+</div>
+<div class="modal" id="preGameModal">
+  <div class="modal-box" style="min-width:360px">
+    <h2>🎁 Редактор рук</h2>
+    <p style="font-size:12px; opacity:0.7; margin-bottom:10px">Выберите игрока и добавьте карты перед стартом</p>
+    <select class="player-select-give" id="preGamePlayerSelect"></select>
+    <div class="give-cards-grid" id="preGameGrid"></div>
+    <div style="margin-top:15px; display:flex; gap:10px; justify-content:center">
+        <button onclick="document.getElementById('preGameModal').classList.remove('show')" style="background:#576574">Закрыть</button>
+        <button onclick="clearAllHands()" style="background:#ff4757">🗑️ Очистить всем</button>
+    </div>
+  </div>
+</div>
+<div id="passOverlay">
+  <h2 id="passTitle">Передайте устройство</h2>
+  <p>🔒 Не показывайте карты другим игрокам</p>
+  <button id="readyBtn" onclick="hidePassOverlay()">▶ Я готов!</button>
+</div>
+
+<div class="modal" id="rulesModal">
+  <div class="modal-box" style="max-width:90vw; padding:20px;">
+    <h2> Правила УНО</h2>
+    <div style="line-height:1.6; font-size:14px; text-align:left; margin-top:10px;">
+      <p><strong>Цель игры:</strong> первым избавиться от всех карт.</p>
+      <p><strong>Ход:</strong> положите карту, совпадающую по цвету или значению с верхней картой сброса. Или — дикая карта.</p>
+      <p><strong>Специальные карты:</strong></p>
+      <ul style="padding-left:20px; margin:8px 0;">
+        <li><strong>Пропуск (⊘)</strong> — следующий игрок пропускает ход.</li>
+        <li><strong>Реверс (⇄)</strong> — меняет направление хода.</li>
+        <li><strong>+2</strong> — следующий игрок берёт 2 карты и пропускает ход.</li>
+        <li><strong>Дикая (★)</strong> — вы выбираете цвет для следующего хода.</li>
+        <li><strong>+4</strong> — вы выбираете цвет, следующий игрок берёт 4 карты и пропускает ход.</li>
+      </ul>
+      <p><strong>УНО!</strong> — когда у вас остаётся 1 карта, кричите «УНО!». Если не крикнёте — возьмите 2 карты.</p>
+      <p><strong>Победа:</strong> игрок, первый сбросивший все карты, занимает 1-е место. Игра продолжается до последнего — определяются все места.</p>
+    </div>
+    <button onclick="document.getElementById('rulesModal').classList.remove('show')" style="margin-top:20px; padding:10px 20px; font-size:14px;">Закрыть</button>
+  </div>
+</div>
+
+<script>
+const COLORS=['red','yellow','green','blue'];
+const VALUES=['0','1','2','3','4','5','6','7','8','9','skip','reverse','+2'];
+const SYM={skip:'',reverse:'⇄','+2':'+2',wild:'★','+4':'+4'};
+const CNAMES={red:'КРАСНЫЙ',yellow:'ЖЁЛТЫЙ',green:'ЗЕЛЁНЫЙ',blue:'СИНИЙ'};
+const CHEX={red:'#ff4757',yellow:'#ffa502',green:'#2ed573',blue:'#1e90ff'};
+
+let players=[],deck=[],discard=[],currentPlayer=0,direction=1;
+let currentColor=null,pendingWild=null,pendingCheatColor=null;
+let audioCtx=null;
+let renderScheduled=false;
+let lastPlayerIndex=-1;
+let skipPassOverlay=false;
+let finishedPlayers = [];
+
+let silentMode = true; // По умолчанию тихий режим включен
+let unoTimer = null;
+let unoWarningShown = false;
+
+function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)}catch(e){}}
+function tone(f,d=.1,t='sine',v=.08){
+  if(!audioCtx)return;
+  try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d)}catch(e){}
+}
+const SFX={
+  play:()=>tone(600,.1,'triangle'),
+  draw:()=>tone(300,.08),
+  bad:()=>tone(150,.15,'sawtooth',.04),
+  uno:()=>{tone(800,.08);setTimeout(()=>tone(1000,.08),80);setTimeout(()=>tone(1200,.15),160)},
+  win:()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.12),i*120)),
+  click:()=>tone(500,.04,'square',.04),
+  punish:()=>{tone(100,.3,'sawtooth',.1);tone(80,.3,'square',.1)},
+  tornado:()=>{
+    for(let i=0;i<8;i++){
+      setTimeout(()=>tone(200+i*50,.15,'sawtooth',.06),i*60);
+    }
+  },
+  roulette:()=>{
+    tone(400,.1,'square',.08);
+    setTimeout(()=>tone(600,.1,'square',.08),100);
+    setTimeout(()=>tone(800,.15,'triangle',.1),200);
+  },
+  steal:()=>{tone(300,.1,'square',.06);setTimeout(()=>tone(500,.15,'triangle',.08),100)},
+  swap:()=>{tone(400,.1,'triangle',.08);setTimeout(()=>tone(600,.1,'triangle',.08),100)},
+  kill:()=>{tone(150,.4,'sawtooth',.12);setTimeout(()=>tone(100,.4,'sawtooth',.1),200)}
+};
+
+const bgC=document.getElementById('bgCanvas');
+const bgX=bgC.getContext('2d');
+let bgP=[];
+function resizeBg(){bgC.width=innerWidth;bgC.height=innerHeight}
+function initBg(){
+  bgP=[];
+  const n=Math.min(35,Math.floor(innerWidth*innerHeight/30000));
+  for(let i=0;i<n;i++)bgP.push({
+    x:Math.random()*bgC.width,y:Math.random()*bgC.height,
+    vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,
+    r:Math.random()*1.8+.8,c:COLORS[i%4]
+  });
+}
+function animBg(){
+  bgX.clearRect(0,0,bgC.width,bgC.height);
+  for(let i=0;i<bgP.length;i++){
+    const p=bgP[i];
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>bgC.width)p.vx*=-1;
+    if(p.y<0||p.y>bgC.height)p.vy*=-1;
+    bgX.globalAlpha=.35;
+    bgX.fillStyle=CHEX[p.c];
+    bgX.beginPath();bgX.arc(p.x,p.y,p.r,0,6.283);bgX.fill();
+  }
+  bgX.globalAlpha=1;
+  requestAnimationFrame(animBg);
+}
+addEventListener('resize',()=>{resizeBg();resizeConf()});
+resizeBg();initBg();animBg();
+
+const cfC=document.getElementById('confettiCanvas');
+const cfX=cfC.getContext('2d');
+let cfs=[];
+function resizeConf(){cfC.width=innerWidth;cfC.height=innerHeight}
+resizeConf();
+function launchConfetti(){
+  for(let i=0;i<120;i++)cfs.push({
+    x:Math.random()*cfC.width,y:-15,
+    vx:(Math.random()-.5)*5,vy:Math.random()*2.5+1.5,
+    s:Math.random()*7+3,c:COLORS[i%4],
+    r:Math.random()*6.28,vr:(Math.random()-.5)*.15,life:180
+  });
+}
+function animConf(){
+  cfX.clearRect(0,0,cfC.width,cfC.height);
+  let alive=0;
+  for(let i=0;i<cfs.length;i++){
+    const c=cfs[i];
+    if(c.life<=0||c.y>cfC.height+40)continue;
+    c.x+=c.vx;c.y+=c.vy;c.vy+=.08;c.r+=c.vr;c.life--;
+    cfX.save();cfX.translate(c.x,c.y);cfX.rotate(c.r);
+    cfX.fillStyle=CHEX[c.c];
+    cfX.fillRect(-c.s/2,-c.s/2,c.s,c.s*.5);
+    cfX.restore();alive++;
+  }
+  if(alive>0||cfs.length>0){
+    if(alive===0)cfs=[];
+    requestAnimationFrame(animConf);
+  }
+}
+
+function spawnP(x,y,color,n=12){
+  const ct=document.getElementById('particles');
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${x}px;top:${y}px;background:${CHEX[color]||'#fff'}`;
+    const a=6.283*i/n,d=40+Math.random()*40;
+    p.style.setProperty('--dx',Math.cos(a)*d+'px');
+    p.style.setProperty('--dy',Math.sin(a)*d+'px');
+    frag.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+  ct.appendChild(frag);
+}
+
+function buildDeck(){
+  const d=[];
+  for(const c of COLORS){
+    d.push({color:c,value:'0'});
+    for(const v of VALUES.slice(1)){d.push({color:c,value:v});d.push({color:c,value:v})}
+  }
+  for(let i=0;i<4;i++){d.push({color:'wild',value:'wild'});d.push({color:'wild',value:'+4'})}
+  return d;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function toggleSilentMode(){
+  silentMode = !silentMode;
+  const toggle = document.getElementById('silentModeToggle');
+  toggle.classList.toggle('active');
+  SFX.click();
+}
+
+function openPreGameEditor(){
+    const ns=document.querySelectorAll('[data-name]');
+    const sel = document.getElementById('preGamePlayerSelect');
+    sel.innerHTML = '';
+    
+    for(let i=0; i<ns.length; i++){
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = ns[i].value || `Игрок ${i+1}`;
+        sel.appendChild(opt);
+    }
+    
+    renderPreGameGrid();
+    sel.onchange = renderPreGameGrid;
+    
+    document.getElementById('preGameModal').classList.add('show');
+}
+
+function renderPreGameGrid(){
+    const grid = document.getElementById('preGameGrid');
+    grid.innerHTML = '';
+    
+    const allCards = [];
+    COLORS.forEach(color=>{
+        VALUES.forEach(value=> allCards.push({color,value}));
+    });
+    allCards.push({color:'wild',value:'wild'});
+    allCards.push({color:'wild',value:'+4'});
+    
+    allCards.forEach(card=>{
+        const btn = document.createElement('div');
+        btn.className = `give-card-btn ${card.color}`;
+        const sym = card.color==='wild'?(card.value==='wild'?'★':'+4'):(SYM[card.value]??card.value);
+        btn.textContent = sym;
+        btn.onclick = () => {
+            const idx = +document.getElementById('preGamePlayerSelect').value;
+            if(!window.preGameHands) window.preGameHands = {};
+            if(!window.preGameHands[idx]) window.preGameHands[idx] = [];
+            
+            window.preGameHands[idx].push({...card});
+            
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(()=>btn.style.transform='', 100);
+        };
+        grid.appendChild(btn);
+    });
+}
+
+function clearAllHands(){
+    window.preGameHands = {};
+    alert('Все руки очищены!');
+}
+
+function renderSetup(){
+  const n=+document.getElementById('playerCount').value;
+  const b=document.getElementById('playerConfigs');
+  let h='';
+  for(let i=0;i<n;i++){
+    h+=`<div class="player-conf">
+      <input type="text" placeholder="Имя ${i+1}" value="Игрок ${i+1}" data-name>
+      <select data-type><option value="human">👤 Человек</option><option value="bot"${i>0?' selected':''}>🤖 Бот</option></select>
+      <select data-difficulty style="display:none;"><option value="easy">Лёгкий</option><option value="medium" selected>Средний</option><option value="hard">Сложный</option></select>
+      <div class="toggle-wrap">
+        <div class="toggle-switch" data-cheat="${i}" onclick="toggleCheat(${i})"></div>
+        <div class="toggle-label">Читы</div>
+      </div>
+    </div>`;
+  }
+  b.innerHTML=h;
+  updateDifficultyVisibility();
+}
+
+function updateDifficultyVisibility(){
+  const configs = document.querySelectorAll('.player-conf');
+  configs.forEach(conf => {
+    const typeSelect = conf.querySelector('[data-type]');
+    const diffSelect = conf.querySelector('[data-difficulty]');
+    if(typeSelect.value === 'bot'){
+      diffSelect.style.display = 'block';
+    } else {
+      diffSelect.style.display = 'none';
+    }
+  });
+}
+
+document.getElementById('playerCount').addEventListener('change',renderSetup);
+
+document.addEventListener('change', (e) => {
+  if(e.target.matches('[data-type]')){
+    updateDifficultyVisibility();
+  }
+});
+
+renderSetup();
+
+function toggleCheat(idx){
+  const el=document.querySelector(`[data-cheat="${idx}"]`);
+  el.classList.toggle('active');
+  SFX.click();
+}
+
+async function startGame(){
+  if(unoTimer){
+    clearTimeout(unoTimer);
+    unoTimer = null;
+  }
+  hideUnoWarning();
+  
+  initAudio();
+  const ns=document.querySelectorAll('[data-name]'),ts=document.querySelectorAll('[data-type]'),ds=document.querySelectorAll('[data-difficulty]');
+  players=[];
+  for(let i=0;i<ns.length;i++){
+    const cheatEl=document.querySelector(`[data-cheat="${i}"]`);
+    players.push({
+      name:ns[i].value||`Игрок ${i+1}`,
+      type:ts[i].value,
+      difficulty:ds[i]?ds[i].value:'medium',
+      hand:[],
+      unoCalled:false,
+      cheatEnabled:cheatEl.classList.contains('active'),
+      finished: false
+    });
+  }
+  
+  if(window.preGameHands){
+      for(let idx in window.preGameHands){
+          if(players[idx]){
+              players[idx].hand = [...window.preGameHands[idx]];
+          }
+      }
+      window.preGameHands = {};
+  }
+
+  finishedPlayers = [];
+  deck=shuffle(buildDeck());discard=[];
+  
+  for(const p of players){
+      if(p.hand.length === 0){
+          for(let i=0;i<7;i++) p.hand.push(deck.pop());
+      }
+  }
+  
+  let f;do{f=deck.pop()}while(f.color==='wild'||f.value>'9');
+  discard.push(f);currentColor=f.color;currentPlayer=0;direction=1;
+  document.getElementById('setup').style.display='none';
+  document.getElementById('game').classList.add('show');
+  updateCheatButton();
+  log(`Игра началась! Ход: ${players[0].name}`);
+  
+  scheduleRender();
+  showPass();
+}
+
+function updateCheatButton(){
+  const me=players[currentPlayer];
+  const btn=document.getElementById('cheatToggle');
+  if(me.type==='human' && me.cheatEnabled){
+    btn.classList.add('show');
+  } else {
+    btn.classList.remove('show');
+    document.getElementById('cheatPanel').classList.remove('show');
+  }
+}
+
+function showPass(){
+  document.getElementById('hand').innerHTML = '';
+  
+  const humanPlayers = players.filter(p => p.type === 'human').length;
+  if (players[currentPlayer].type === 'human' && humanPlayers === 1) {
+    log(`Ход: ${players[currentPlayer].name}`);
+    scheduleRender();
+    botCheck();
+    return;
+  }
+  document.getElementById('passTitle').textContent=`Ход: ${players[currentPlayer].name}`;
+  document.getElementById('passOverlay').classList.add('show');
+}
+
+function hidePassOverlay(){
+  SFX.click();
+  document.getElementById('passOverlay').classList.remove('show');
+  scheduleRender();
+  botCheck();
+}
+
+function cardLabel(c){
+  if(c.color==='wild')return c.value==='wild'?'🌈 Дикая':'🌈 +4';
+  return `${SYM[c.value]??c.value} ${CNAMES[c.color]}`;
+}
+function canPlay(c){
+  const t=discard[discard.length-1];
+  return c.color==='wild'||c.color===currentColor||c.value===t.value;
+}
+
+function scheduleRender(){
+  if(!renderScheduled){renderScheduled=true;requestAnimationFrame(doRender)}
+}
+function doRender(){
+  if(document.getElementById('passOverlay').classList.contains('show')){
+    renderScheduled = false;
+    return;
+  }
+
+  renderScheduled=false;
+  const opp=document.getElementById('opponents');
+  let oh='';
+  for(let i=0;i<players.length;i++){
+    const p=players[i];
+    if(i===currentPlayer&&p.type==='human')continue;
+    if(p.finished) continue;
+    const act=i===currentPlayer?' active':'';
+    const ico=p.type==='bot'?'':'👤';
+    const cnt=Math.min(p.hand.length,14);
+    let backs='';for(let k=0;k<cnt;k++)backs+='<span class="card-back-mini"></span>';
+    
+    let danger = '';
+    if(p.hand.length <= 2 && !p.finished) danger = '<span style="color:#ff4757;font-size:10px">⚠️</span>';
+
+    oh+=`<div class="opp${act}"><div class="name">${ico} ${p.name}${danger}</div><div class="count">${p.hand.length} карт</div><div>${backs}</div></div>`;
+  }
+  opp.innerHTML=oh;
+
+  const top=discard[discard.length-1];
+  const dEl=document.getElementById('discard');
+  dEl.innerHTML=makeCardHTML(top);
+  if(currentColor&&currentColor!==top.color)
+    dEl.firstElementChild.style.boxShadow=`0 0 25px 6px ${CHEX[currentColor]}`;
+
+  const ci=document.getElementById('colorIndicator');
+  ci.textContent='● '+CNAMES[currentColor];
+  ci.style.borderColor=CHEX[currentColor];
+  ci.style.boxShadow=`0 0 15px ${CHEX[currentColor]}`;
+
+  document.getElementById('deckCount').textContent=deck.length;
+  renderHand();
+}
+
+function makeCardHTML(c){
+  const cls=c.color==='wild'?'wild':c.color;
+  const s=c.color==='wild'?(c.value==='wild'?'★':'+4'):(SYM[c.value]??c.value);
+  return `<div class="card ${cls}"><div class="tl">${s}</div><div class="mid">${s}</div><div class="br">${s}</div></div>`;
+}
+
+function renderHand(){
+  const hand=document.getElementById('hand');
+  const me=players[currentPlayer];
+  if(me.type!=='human'){
+    hand.innerHTML=`<div style="padding:20px;opacity:.6">🤖 ${me.name} думает...</div>`;
+    return;
+  }
+  if(me.finished) {
+    hand.innerHTML=`<div style="padding:20px;opacity:.6">🏆 ${me.name} занял ${finishedPlayers.length}-е место</div>`;
+    return;
+  }
+  hand.innerHTML='';
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<me.hand.length;i++){
+    const c=me.hand[i];
+    const el=document.createElement('div');
+    el.innerHTML=makeCardHTML(c);
+    const card=el.firstElementChild;
+    card.dataset.idx=i;
+    if(canPlay(c))card.classList.add('playable');
+    card.addEventListener('click',onCardClick);
+    card.addEventListener('mousedown',onDragStart);
+    card.addEventListener('touchstart',onDragStart,{passive:false});
+    frag.appendChild(card);
+  }
+  hand.appendChild(frag);
+}
+
+function onCardClick(e){
+  const card=e.currentTarget;
+  if(card._wasDragged){card._wasDragged=false;return}
+  const idx=+card.dataset.idx;
+  playCardWithAnimation(idx, card);
+}
+
+function playCardWithAnimation(idx, cardElement) {
+  const me = players[currentPlayer];
+  if(me.type!=='human') return;
+  if(me.finished) return;
+  
+  const card = me.hand[idx];
+  if(!canPlay(card)){
+    SFX.bad();
+    log('Нельзя сыграть эту карту!', true);
+    return;
+  }
+
+  const cardRect = cardElement.getBoundingClientRect();
+  const targetRect = document.getElementById('discard').getBoundingClientRect();
+
+  const clone = cardElement.cloneNode(true);
+  clone.className = cardElement.className;
+  clone.classList.add('drag-clone');
+  clone.style.position = 'fixed';
+  clone.style.left = cardRect.left + 'px';
+  clone.style.top = cardRect.top + 'px';
+  clone.style.width = cardRect.width + 'px';
+  clone.style.height = cardRect.height + 'px';
+  clone.style.zIndex = '9999';
+  clone.style.pointerEvents = 'none';
+  clone.style.transition = 'all 0.35s cubic-bezier(.34,1.56,.64,1)';
+  
+  cardElement.style.opacity = '0';
+  
+  document.body.appendChild(clone);
+
+  requestAnimationFrame(() => {
+    clone.style.left = targetRect.left + 'px';
+    clone.style.top = targetRect.top + 'px';
+    clone.style.transform = 'scale(1.05) rotate(8deg)';
+  });
+
+  setTimeout(() => {
+    clone.remove();
+    playCard(idx, true);
+  }, 350);
+}
+
+let dragState=null;
+let lastMoveTime=0;
+
+function onDragStart(e){
+  if(players[currentPlayer].type!=='human')return;
+  if(players[currentPlayer].finished) return;
+  const card=e.currentTarget;
+  const idx=+card.dataset.idx;
+  const pt=e.touches?e.touches[0]:e;
+  const rect=card.getBoundingClientRect();
+
+  dragState={
+    idx,card,
+    startX:pt.clientX,startY:pt.clientY,
+    ox:pt.clientX-rect.left,oy:pt.clientY-rect.top,
+    w:rect.width,h:rect.height,
+    dragging:false,clone:null
+  };
+
+  document.addEventListener('mousemove',onDragMove,{passive:false});
+  document.addEventListener('mouseup',onDragEnd,{passive:false});
+  document.addEventListener('touchmove',onDragMove,{passive:false});
+  document.addEventListener('touchend',onDragEnd,{passive:false});
+}
+
+function onDragMove(e){
+  if(!dragState)return;
+  e.preventDefault();
+  const now=performance.now();
+  if(now-lastMoveTime<16)return;
+  lastMoveTime=now;
+
+  const pt=e.touches?e.touches[0]:e;
+  const dx=pt.clientX-dragState.startX;
+  const dy=pt.clientY-dragState.startY;
+
+  if(!dragState.dragging&&Math.hypot(dx,dy)>10){
+    dragState.dragging=true;
+    dragState.card.classList.add('drag-ghost');
+    const cl=dragState.card.cloneNode(true);
+    cl.className='card '+(dragState.card.className.includes('wild')?'wild':
+      dragState.card.className.includes('red')?'red':
+      dragState.card.className.includes('yellow')?'yellow':
+      dragState.card.className.includes('green')?'green':'blue');
+    cl.classList.add('drag-clone');
+    cl.style.width=dragState.w+'px';
+    cl.style.height=dragState.h+'px';
+    cl.style.left=(pt.clientX-dragState.ox)+'px';
+    cl.style.top=(pt.clientY-dragState.oy)+'px';
+    document.body.appendChild(cl);
+    dragState.clone=cl;
+    SFX.click();
+  }
+
+  if(dragState.dragging){
+    dragState.clone.style.left=(pt.clientX-dragState.ox)+'px';
+    dragState.clone.style.top=(pt.clientY-dragState.oy)+'px';
+    const dr=document.getElementById('discardPile').getBoundingClientRect();
+    const over=pt.clientX>=dr.left&&pt.clientX<=dr.right&&pt.clientY>=dr.top&&pt.clientY<=dr.bottom;
+    document.getElementById('discardPile').classList.toggle('drop-hover',over);
+  }
+}
+
+function onDragEnd(e){
+  document.removeEventListener('mousemove',onDragMove);
+  document.removeEventListener('mouseup',onDragEnd);
+  document.removeEventListener('touchmove',onDragMove);
+  document.removeEventListener('touchend',onDragEnd);
+
+  if(!dragState)return;
+  const ds=dragState;
+  dragState=null;
+  document.getElementById('discardPile').classList.remove('drop-hover');
+
+  if(!ds.dragging)return;
+
+  ds.card.classList.remove('drag-ghost');
+  const pt=e.changedTouches?e.changedTouches[0]:e;
+  const dr=document.getElementById('discardPile').getBoundingClientRect();
+  const over=pt.clientX>=dr.left&&pt.clientX<=dr.right&&pt.clientY>=dr.top&&pt.clientY<=dr.bottom;
+
+  if(over&&canPlay(players[currentPlayer].hand[ds.idx])){
+    const target=document.getElementById('discard').getBoundingClientRect();
+    ds.clone.style.transition='all .35s cubic-bezier(.34,1.56,.64,1)';
+    ds.clone.style.left=target.left+'px';
+    ds.clone.style.top=target.top+'px';
+    ds.clone.style.transform='scale(1.05) rotate(8deg)';
+    const idx=ds.idx;
+    setTimeout(()=>{ds.clone.remove();playCard(idx,true)},350);
+  } else {
+    const orig=ds.card.getBoundingClientRect();
+    ds.clone.style.transition='all .3s cubic-bezier(.34,1.56,.64,1)';
+    ds.clone.style.left=orig.left+'px';
+    ds.clone.style.top=orig.top+'px';
+    ds.clone.style.transform='scale(1)';
+    if(!over)SFX.bad();
+    setTimeout(()=>ds.clone.remove(),300);
+    ds.card._wasDragged=true;
+  }
+}
+
+function playCard(idx,fromDrag=false){
+  const me=players[currentPlayer];
+  if(me.type!=='human')return;
+  if(me.finished) return;
+  const card=me.hand[idx];
+  if(!canPlay(card)){if(!fromDrag){SFX.bad();log('Нельзя сыграть эту карту!', true)}return}
+
+  SFX.play();
+  me.hand.splice(idx,1);
+  discard.push(card);
+  log(`${me.name}: ${cardLabel(card)}`, true);
+
+  const r=document.getElementById('discard').getBoundingClientRect();
+  spawnP(r.left+r.width/2,r.top+r.height/2,card.color==='wild'?'red':card.color,15);
+
+  handleEffect(card,()=>{
+    if(me.hand.length === 1 && !me.unoCalled && !me.finished){
+      log(`⚠️ ${me.name}, нажми УНО! (1.5 сек)`, true);
+      showUnoWarning();
+      
+      if(unoTimer) clearTimeout(unoTimer);
+      unoTimer = setTimeout(() => {
+        unoTimer = null;
+        hideUnoWarning();
+        
+        if(!me.unoCalled && me.hand.length === 1 && !me.finished){
+          SFX.punish();
+          drawN(me, 2);
+          log(`🚫 ${me.name} забыл УНО! +2 карты`, true);
+          document.body.style.backgroundColor = '#500';
+          setTimeout(() => document.body.style.backgroundColor = '', 200);
+        }
+        checkWin(me);
+        prepareNext();
+      }, 1500);
+    } else {
+      checkWin(me);
+      prepareNext();
+    }
+  });
+}
+
+function showUnoWarning(){
+  unoWarningShown = true;
+  const warning = document.getElementById('unoWarning');
+  warning.style.display = 'block';
+  
+  const btn = document.querySelector('.uno-btn');
+  btn.style.animation = 'unoPulseWarning 0.3s infinite';
+}
+
+function hideUnoWarning(){
+  unoWarningShown = false;
+  const warning = document.getElementById('unoWarning');
+  warning.style.display = 'none';
+  
+  const btn = document.querySelector('.uno-btn');
+  btn.style.animation = 'unoPulse 1.5s infinite';
+}
+
+function handleEffect(card,cb){
+  if(card.color==='wild'){
+    pendingWild=cb;
+    if(players[currentPlayer].type==='bot'){
+      const ct={red:0,yellow:0,green:0,blue:0};
+      players[currentPlayer].hand.forEach(c=>{if(c.color!=='wild')ct[c.color]++});
+      pickColor(Object.keys(ct).reduce((a,b)=>ct[a]>=ct[b]?a:b));
+    } else document.getElementById('colorModal').classList.add('show');
+    return;
+  }
+  currentColor=card.color;
+  let skip=false;
+  
+  if(card.value==='skip'){
+    log(`${players[nxt()].name} пропущен`, true);
+    skip=true;
+    if(players.length===2)skipPassOverlay=true;
+  }
+  else if(card.value==='reverse'){
+    direction*=-1;
+    log('Направление ↺', true);
+    if(players.length===2){
+      skip=true;
+      skipPassOverlay=true;
+    }
+  }
+  else if(card.value==='+2'){
+    const v=players[nxt()];
+    drawN(v,2);
+    log(`${v.name} +2`, true);
+    skip=true;
+    if(players.length===2)skipPassOverlay=true;
+  }
+  
+  if(skip)currentPlayer=nxt();
+  cb();
+}
+
+function pickColor(color){
+  SFX.play();currentColor=color;
+  document.getElementById('colorModal').classList.remove('show');
+  log(`Цвет: ${CNAMES[color]}`, true);
+  const card=discard[discard.length-1];
+  if(card.value==='+4'){
+    const v=players[nxt()];
+    drawN(v,4);
+    log(`${v.name} +4`, true);
+    currentPlayer=nxt();
+    if(players.length===2)skipPassOverlay=true;
+  }
+  const cb=pendingWild;pendingWild=null;
+  const cc=pendingCheatColor;pendingCheatColor=null;
+  if(cc){cc();return}
+  if(cb)cb();else{checkWin(players[currentPlayer]);prepareNext()}
+}
+
+function drawN(p,n){for(let i=0;i<n;i++){if(!deck.length)reshuffle();if(deck.length)p.hand.push(deck.pop())}}
+
+function drawCard(){
+  const me=players[currentPlayer];
+  if(me.type!=='human')return;
+  if(me.finished) return;
+  if(!deck.length)reshuffle();
+  if(!deck.length)return;
+  SFX.draw();
+  me.hand.push(deck.pop());
+  log(`${me.name} взял карту`, true);
+  scheduleRender();
+  if(!canPlay(me.hand[me.hand.length-1]))setTimeout(()=>prepareNext(),600);
+}
+
+function reshuffle(){
+  if(discard.length<=1)return;
+  const t=discard.pop();deck=shuffle(discard);discard=[t];log('Колода перетасована', true);
+}
+
+function nxt(){
+    let next = (currentPlayer + direction + players.length) % players.length;
+    while (players[next].finished && players.filter(p => !p.finished).length > 1) {
+        next = (next + direction + players.length) % players.length;
+    }
+    return next;
+}
+
+function prepareNext(){
+  players[currentPlayer].unoCalled = false;
+  
+  lastPlayerIndex = currentPlayer;
+  currentPlayer = nxt();
+  updateCheatButton();
+  scheduleRender();
+  
+  if(players[currentPlayer].type==='bot'){
+    botCheck();
+  } else {
+    if(skipPassOverlay){
+      skipPassOverlay=false;
+      log("🔁 Ваш ход снова!", true);
+    } else {
+      showPass();
+    }
+  }
+}
+
+function botCheck(){if(players[currentPlayer].type==='bot' && !players[currentPlayer].finished) setTimeout(botTurn,800)}
+
+function botTurn(){
+  const me=players[currentPlayer];
+  if(me.finished) {
+    currentPlayer=nxt();
+    updateCheatButton();
+    scheduleRender();
+    if(players[currentPlayer].type==='bot') botCheck();
+    else showPass();
+    return;
+  }
+
+  const playable = me.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
+  
+  if(playable.length){
+    const opponents = players.filter(p => !p.finished && p !== me);
+    const isDanger = opponents.some(p => p.hand.length === 1);
+    
+    if(me.difficulty === 'easy'){
+      playable.sort(() => Math.random() - 0.5);
+    } else if(me.difficulty === 'medium'){
+      playable.sort((a,b) => {
+        let scoreA = 0, scoreB = 0;
+        if(['+2','skip','reverse'].includes(a.c.value)) scoreA += 20;
+        if(['+2','skip','reverse'].includes(b.c.value)) scoreB += 20;
+        if(a.c.value === '+4') scoreA += 15;
+        if(b.c.value === '+4') scoreB += 15;
+        if(a.c.color === 'wild' && a.c.value !== '+4') scoreA -= 10;
+        if(b.c.color === 'wild' && b.c.value !== '+4') scoreB -= 10;
+        return scoreB - scoreA;
+      });
+    } else {
+      playable.sort((a,b) => {
+        let scoreA = 0, scoreB = 0;
+        if(['+2','skip','reverse'].includes(a.c.value)) scoreA += 20;
+        if(['+2','skip','reverse'].includes(b.c.value)) scoreB += 20;
+        if(a.c.value === '+4') scoreA += 15;
+        if(b.c.value === '+4') scoreB += 15;
+        if(a.c.color === 'wild' && a.c.value !== '+4') scoreA -= 10;
+        if(b.c.color === 'wild' && b.c.value !== '+4') scoreB -= 10;
+        if(me.hand.length > 5) {
+          if(!isNaN(a.c.value)) scoreA += 5;
+          if(!isNaN(b.c.value)) scoreB += 5;
+        }
+        if(isDanger){
+          if(['+2','+4','skip'].includes(a.c.value)) scoreA += 50;
+          if(['+2','+4','skip'].includes(b.c.value)) scoreB += 50;
+        }
+        return scoreB - scoreA;
+      });
+    }
+
+    const ch=playable[0];
+    
+    if(['+4','skip','reverse'].includes(ch.c.value)) {
+      const nextP = players[nxt()];
+      if(nextP.hand.length <= 2) {
+        log(`🚀 ${me.name} использует бустер против ${nextP.name}!`, true);
+      }
+    }
+
+    me.hand.splice(ch.i,1);discard.push(ch.c);
+    SFX.play();log(`${me.name}: ${cardLabel(ch.c)}`, true);
+    const r=document.getElementById('discard').getBoundingClientRect();
+    spawnP(r.left+r.width/2,r.top+r.height/2,ch.c.color==='wild'?'red':ch.c.color,10);
+    
+    handleEffect(ch.c,()=>{
+      if(me.hand.length===1){SFX.uno();log(`${me.name}: УНО!`, true);me.unoCalled=true;}
+      checkWin(me);prepareNext();
+    });
+  } else {
+    if(!deck.length)reshuffle();
+    if(deck.length){
+      const c=deck.pop();me.hand.push(c);SFX.draw();log(`${me.name} взял`, true);scheduleRender();
+      if(canPlay(c))setTimeout(()=>{
+        const i=me.hand.length-1;me.hand.splice(i,1);discard.push(c);
+        SFX.play();log(`${me.name}: ${cardLabel(c)}`, true);
+        handleEffect(c,()=>{checkWin(me);prepareNext()});
+      },600);
+      else setTimeout(()=>prepareNext(),600);
+    } else prepareNext();
+  }
+}
+
+function callUno(){
+  const me=players[currentPlayer];
+  if(me.type!=='human')return;
+  if(me.finished) return;
+  if(me.hand.length<=2){
+    me.unoCalled=true;
+    SFX.uno();
+    log(`${me.name}: УНО! 🔴`, true);
+    const r=document.querySelector('.uno-btn').getBoundingClientRect();
+    spawnP(r.left+r.width/2,r.top+r.height/2,'red',25);
+    
+    if(unoTimer){
+      clearTimeout(unoTimer);
+      unoTimer = null;
+      hideUnoWarning();
+      checkWin(me);
+      prepareNext();
+    }
+  } else{
+    SFX.bad();
+    log('Рано кричать УНО!', true);
+  }
+}
+
+function checkWin(p){
+  if(!p.hand.length && !p.finished){
+    const place = finishedPlayers.length + 1;
+    finishedPlayers.push({player: p, place: place});
+    p.finished = true;
+    log(`🏆 ${p.name} занял ${place}-е место!`, true);
+
+    const remaining = players.filter(pl => !pl.finished);
+    if (remaining.length <= 1) {
+      SFX.win();launchConfetti();animConf();
+      let resultsHtml = '<div style="margin-top: 10px;">';
+      finishedPlayers.forEach(item => {
+        resultsHtml += `<div>${item.place}. ${item.player.name}</div>`;
+      });
+      if(remaining.length === 1) {
+          const last = remaining[0];
+          const lastPlace = finishedPlayers.length + 1;
+          resultsHtml += `<div>${lastPlace}. ${last.name} (последний)</div>`;
+      }
+      resultsHtml += '</div>';
+      document.getElementById('finalResults').innerHTML = resultsHtml;
+      setTimeout(()=>document.getElementById('winModal').classList.add('show'),400);
+    } else {
+      currentPlayer = nxt();
+      updateCheatButton();
+      scheduleRender();
+      if(players[currentPlayer].type==='bot') botCheck();
+      else showPass();
+    }
+  }
+}
+
+// ИСПРАВЛЕНИЕ: Лог теперь показывает обычные действия, но скрывает читы
+function log(m, silent = false){
+  // Если включен тихий режим И сообщение помечено как служебное (silent=true) -> скрываем
+  if(silentMode && silent) return;
+  
+  const l=document.getElementById('log');
+  const d=document.createElement('div');d.textContent='• '+m;
+  l.insertBefore(d,l.firstChild);
+  while(l.children.length>12)l.removeChild(l.lastChild);
+}
+
+function toggleCheatPanel(){SFX.click();document.getElementById('cheatPanel').classList.toggle('show')}
+function toggleFullscreen(){
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {});
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+  }
+}
+
+function showRules() {
+  document.getElementById('rulesModal').classList.add('show');
+}
+
+function cheatGiveCards(){
+  SFX.click();
+  const sel=document.getElementById('givePlayerSelect');
+  sel.innerHTML='';
+  players.forEach((p,i)=>{
+    if(p.finished) return;
+    const opt=document.createElement('option');
+    opt.value=i;
+    opt.textContent=`${p.type==='bot'?'🤖':''} ${p.name}`;
+    sel.appendChild(opt);
+  });
+  
+  const grid=document.getElementById('giveCardsGrid');
+  grid.innerHTML='';
+  
+  const allCards=[];
+  COLORS.forEach(color=>{
+    VALUES.forEach(value=>{
+      allCards.push({color,value});
+    });
+  });
+  allCards.push({color:'wild',value:'wild'});
+  allCards.push({color:'wild',value:'+4'});
+  
+  allCards.forEach(card=>{
+    const btn=document.createElement('div');
+    btn.className=`give-card-btn ${card.color}`;
+    const sym=card.color==='wild'?(card.value==='wild'?'★':'+4'):(SYM[card.value]??card.value);
+    btn.textContent=sym;
+    btn.onclick=()=>{
+      const playerIdx=+sel.value;
+      if(players[playerIdx].finished) {log('Нельзя давать карты завершившему игроку', true); return;}
+      players[playerIdx].hand.push({...card});
+      log(`🎁 ${cardLabel(card)} → ${players[playerIdx].name}`, true);
+      scheduleRender();
+      SFX.play();
+    };
+    grid.appendChild(btn);
+  });
+  
+  document.getElementById('giveCardsModal').classList.add('show');
+}
+
+function cheatSpy(){
+  SFX.click();const g=document.getElementById('spyGrid');g.innerHTML='';
+  players.forEach(p=>{
+    if(p.finished) return;
+    let cards='';p.hand.forEach(c=>cards+=makeCardHTML(c));
+    g.innerHTML+=`<div class="spy-player"><h4>${p.type==='bot'?'🤖':'👤'} ${p.name} (${p.hand.length})</h4><div class="spy-cards">${cards}</div></div>`;
+  });
+  document.getElementById('spyModal').classList.add('show');log('👁️ Подсмотрел', true);
+}
+function cheatHint(){
+  SFX.click();const me=players[currentPlayer];
+  if(me.type!=='human'){log('Ход бота', true);return}
+  if(me.finished) {log('Вы уже заняли своё место', true); return}
+  const pl=me.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
+  if(!pl.length){log('Бери карту', true);return}
+  pl.forEach(p=>{let s=0;if(p.c.value==='+2')s+=10;if(p.c.value==='skip')s+=8;
+    if(p.c.value==='reverse')s+=6;if(p.c.color==='wild')s-=5;
+    else s+=me.hand.filter(x=>x.color===p.c.color).length;p.score=s});
+  pl.sort((a,b)=>b.score-a.score);
+  const cards=document.querySelectorAll('#hand .card');
+  if(cards[pl[0].i]){cards[pl[0].i].classList.add('hint');setTimeout(()=>cards[pl[0].i]?.classList.remove('hint'),3000)}
+  log(`🎯 ${cardLabel(pl[0].c)}`, true);
+}
+function cheatDeck(){
+  SFX.click();const p=document.getElementById('deckPreview');p.innerHTML='';
+  const n=Math.min(5,deck.length);
+  if(!n)p.innerHTML='<p>Пусто</p>';
+  else for(let i=0;i<n;i++){const el=document.createElement('div');el.innerHTML=makeCardHTML(deck[deck.length-1-i]);p.appendChild(el.firstElementChild)}
+  document.getElementById('deckModal').classList.add('show');log('📜 Колода', true);
+}
+function cheatColor(){
+  SFX.click();pendingCheatColor=()=>{log(`🎨 ${CNAMES[currentColor]}`, true);scheduleRender()};
+  document.getElementById('colorModal').classList.add('show');
+}
+function cheatShuffleHand(){
+  SFX.click();const me=players[currentPlayer];if(me.type!=='human')return;
+  if(me.finished) {log('Вы уже заняли своё место', true); return}
+  const o={red:0,yellow:1,green:2,blue:3,wild:4};
+  me.hand.sort((a,b)=>o[a.color]-o[b.color]||a.value.localeCompare(b.value,undefined,{numeric:true}));
+  scheduleRender();log('🔀 Отсортировано', true);
+}
+function cheatSkipNext(){
+  SFX.click();const s=players[nxt()];currentPlayer=nxt();scheduleRender();
+  log(`⏭️ ${s.name} пропущен`, true);
+  if(players[currentPlayer].type==='bot')botCheck();else showPass();
+}
+function cheatRemoveCard(){
+  SFX.click();openPick('Убрать у кого?',i=>{
+    if(i===currentPlayer)return;const v=players[i];
+    if(v.finished) {log('Нельзя взаимодействовать с завершившим игроком', true); return;}
+    if(!v.hand.length)return;
+    const r=v.hand.splice(Math.random()*v.hand.length|0,1)[0];
+    log(`🗑️ ${cardLabel(r)} у ${v.name}`, true);scheduleRender();
+  });
+}
+function cheatPunish(){
+  SFX.click();openPick('Наказать кого?',i=>{
+    if(i===currentPlayer)return;const v=players[i];
+    if(v.finished) {log('Нельзя взаимодействовать с завершившим игроком', true); return;}
+    drawN(v,3);
+    log(`📦 ${v.name} +3`, true);scheduleRender();
+  });
+}
+function cheatWin(){
+  SFX.click();const me=players[currentPlayer];
+  if(me.finished) {log('Вы уже заняли своё место', true); return;}
+  me.hand=[];
+  log(`🏆 ${me.name} победил!`, true);
+  checkWin(me);scheduleRender();
+}
+function openPick(title,cb){
+  document.getElementById('playerPickTitle').textContent=title;
+  const l=document.getElementById('playerPickList');l.innerHTML='';
+  players.forEach((p,i)=>{
+    if(p.finished) return;
+    const b=document.createElement('button');
+    b.textContent=`${p.type==='bot'?'🤖':''} ${p.name}`;
+    b.onclick=()=>{document.getElementById('playerPickModal').classList.remove('show');cb(i)};
+    l.appendChild(b);
+  });
+  document.getElementById('playerPickModal').classList.add('show');
+}
+
+function cheatSwapHands(){
+  SFX.swap();
+  openPick('🔄 Поменяться руками с кем?', i => {
+    if(i === currentPlayer){ log('❌ Нельзя меняться с собой', true); return; }
+    const v = players[i];
+    if(v.finished){ log('❌ Игрок уже завершил', true); return; }
+    const me = players[currentPlayer];
+    if(me.finished){ log('❌ Вы уже завершили', true); return; }
+    
+    const temp = [...me.hand];
+    me.hand = [...v.hand];
+    v.hand = temp;
+    
+    log(`🔄 ${me.name} ↔ ${v.name}: обмен руками`, true);
+    spawnP(innerWidth/2, innerHeight/2, 'gold', 30);
+    scheduleRender();
+  });
+}
+
+function cheatSteal(){
+  SFX.steal();
+  openPick(' Кого ограбить?', i => {
+    if(i === currentPlayer){ log('❌ Нельзя грабить себя', true); return; }
+    const v = players[i];
+    if(v.finished){ log('❌ Игрок уже завершил', true); return; }
+    const me = players[currentPlayer];
+    if(me.finished){ log('❌ Вы уже завершили', true); return; }
+    if(v.hand.length === 0){ log('❌ У игрока нет карт', true); return; }
+    
+    const n = Math.min(3, v.hand.length);
+    const stolen = [];
+    for(let k = 0; k < n; k++){
+      const idx = Math.floor(Math.random() * v.hand.length);
+      stolen.push(v.hand.splice(idx, 1)[0]);
+    }
+    me.hand.push(...stolen);
+    
+    log(`💰 ${me.name} украл ${n} карт(у) у ${v.name}!`, true);
+    scheduleRender();
+  });
+}
+
+function cheatTornado(){
+  SFX.tornado();
+  document.body.classList.add('tornado-effect');
+  setTimeout(() => document.body.classList.remove('tornado-effect'), 800);
+  
+  const allCards = [];
+  const activePlayers = players.filter(p => !p.finished);
+  
+  activePlayers.forEach(p => {
+    allCards.push(...p.hand);
+    p.hand = [];
+  });
+  
+  shuffle(allCards);
+  
+  while(allCards.length > 0){
+    for(const p of activePlayers){
+      if(allCards.length === 0) break;
+      p.hand.push(allCards.pop());
+    }
+  }
+  
+  log(`️ ТОРНАДО! Все карты перемешаны!`, true);
+  spawnP(innerWidth/2, innerHeight/2, 'red', 40);
+  setTimeout(() => spawnP(innerWidth/2, innerHeight/2, 'blue', 40), 200);
+  setTimeout(() => spawnP(innerWidth/2, innerHeight/2, 'green', 40), 400);
+  
+  scheduleRender();
+}
+
+function cheatKill(){
+  SFX.kill();
+  openPick('💀 Кого убить?', i => {
+    if(i === currentPlayer){ log('❌ Нельзя убить себя', true); return; }
+    const v = players[i];
+    if(v.finished){ log('❌ Игрок уже завершил', true); return; }
+    
+    const cardCount = v.hand.length;
+    v.hand = [];
+    
+    log(`💀 ${v.name} убит!`, true);
+    document.body.style.backgroundColor = '#300';
+    setTimeout(() => document.body.style.backgroundColor = '', 300);
+    spawnP(innerWidth/2, innerHeight/3, 'red', 50);
+    
+    checkWin(v);
+    scheduleRender();
+  });
+}
+
+function cheatRoulette(){
+  SFX.roulette();
+  document.body.classList.add('roulette-effect');
+  setTimeout(() => document.body.classList.remove('roulette-effect'), 600);
+  
+  const activePlayers = players.filter(p => !p.finished);
+  if(activePlayers.length === 0){ log('❌ Нет активных игроков', true); return; }
+  
+  const events = [
+    () => {
+      activePlayers.forEach(p => drawN(p, 2));
+      log('🎲 РУЛЕТКА: Все берут +2!', true);
+    },
+    () => {
+      activePlayers.forEach(p => {
+        if(p.hand.length > 0){
+          const idx = Math.floor(Math.random() * p.hand.length);
+          p.hand.splice(idx, 1);
+        }
+      });
+      log('🎲 РУЛЕТКА: Все теряют по 1 карте!', true);
+    },
+    () => {
+      direction *= -1;
+      log(`🎲 РУЛЕТКА: Направление изменено!`, true);
+    },
+    () => {
+      const c = COLORS[Math.floor(Math.random() * 4)];
+      currentColor = c;
+      log(`🎲 РУЛЕТКА: Цвет ${CNAMES[c]}!`, true);
+    },
+    () => {
+      const rnd = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+      drawN(rnd, 4);
+      log(`🎲 РУЛЕТКА: ${rnd.name} +4!`, true);
+    },
+    () => {
+      activePlayers.forEach(p => drawN(p, 1));
+      log(' РУЛЕТКА: Все берут +1!', true);
+    }
+  ];
+  
+  const ev = events[Math.floor(Math.random() * events.length)];
+  ev();
+  spawnP(innerWidth/2, innerHeight/2, 'gold', 40);
+  scheduleRender();
+}
+</script>
+</body>
+</html>
